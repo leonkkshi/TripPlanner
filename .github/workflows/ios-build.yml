@@ -1,0 +1,61 @@
+name: iOS Build (XcodeGen)
+
+on:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - "ios/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew update; brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Build (iOS Simulator)
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -project TripPlanner.xcodeproj \
+            -scheme TripPlanner \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            -derivedDataPath DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package Simulator app
+        working-directory: ios
+        run: |
+          APP_PATH="DerivedData/Build/Products/Debug-iphonesimulator/TripPlanner.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Expected app not found at $APP_PATH" >&2
+            ls -la DerivedData/Build/Products || true
+            exit 1
+          fi
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" TripPlanner-Simulator.app.zip
+
+      - name: Upload Simulator app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TripPlanner-Simulator.app.zip
+          path: ios/TripPlanner-Simulator.app.zip

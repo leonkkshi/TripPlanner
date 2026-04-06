@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "iOS: XcodeGen generate",
+      "type": "shell",
+      "command": "echo",
+      "args": ["This task requires macOS + Xcode (run it via VS Code Remote SSH to a Mac)."],
+      "osx": {
+        "command": "bash",
+        "args": ["-lc", "cd ios && xcodegen generate"]
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "iOS: Build (Simulator)",
+      "type": "shell",
+      "command": "echo",
+      "args": ["This task requires macOS + Xcode (run it via VS Code Remote SSH to a Mac)."],
+      "osx": {
+        "command": "bash",
+        "args": [
+          "-lc",
+          "cd ios && xcodebuild -project TripPlanner.xcodeproj -scheme TripPlanner -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -configuration Debug CODE_SIGNING_ALLOWED=NO build"
+        ]
+      },
+      "dependsOn": ["iOS: XcodeGen generate"],
+      "problemMatcher": []
+    }
+  ]
+}
