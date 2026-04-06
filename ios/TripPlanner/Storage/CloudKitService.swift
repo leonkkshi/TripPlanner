@@ -195,15 +195,19 @@ final class CloudKitService {
 		do {
 			_ = try await database.save(CKRecordZone(zoneID: zoneID))
 		} catch {
-			if let ckError = error as? CKError, ckError.code == .zoneAlreadyExists {
-				return
+			if let ckError = error as? CKError {
+				// Xcode 16 SDK không còn expose một số enum case “already exists”.
+				// Với create-zone idempotent, coi serverRejectedRequest như “zone đã tồn tại”.
+				if ckError.code == .serverRejectedRequest {
+					return
+				}
 			}
 			throw error
 		}
 	}
 
 	private func acceptShareMetadata(container: CKContainer, metadata: CKShare.Metadata) async throws {
-		try await withCheckedThrowingContinuation { continuation in
+		try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
 			let operation = CKAcceptSharesOperation(shareMetadatas: [metadata])
 			operation.qualityOfService = .userInitiated
 			operation.perShareResultBlock = { _, result in
@@ -284,12 +288,20 @@ final class CloudKitService {
 		var cursor: CKQueryOperation.Cursor?
 
 		let (firstResults, firstCursor) = try await database.records(matching: query, inZoneWith: zoneID)
-		all.append(contentsOf: firstResults.values.compactMap { try? $0.get() })
+		for (_, result) in firstResults {
+			if case .success(let record) = result {
+				all.append(record)
+			}
+		}
 		cursor = firstCursor
 
 		while let nextCursor = cursor {
 			let (results, newCursor) = try await database.records(continuingMatchFrom: nextCursor)
-			all.append(contentsOf: results.values.compactMap { try? $0.get() })
+			for (_, result) in results {
+				if case .success(let record) = result {
+					all.append(record)
+				}
+			}
 			cursor = newCursor
 		}
 

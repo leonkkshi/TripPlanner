@@ -27,7 +27,7 @@ struct ShareToTripIntent: AppIntent {
 			return .result(dialog: "Không tìm thấy trip hợp lệ.")
 		}
 
-		let repository = TripRepository()
+		let repository = await TripRepository()
 		await repository.load()
 		try await repository.addLinkSuggestion(tripId: tripId, url: url, note: note)
 		return .result(dialog: "Đã thêm link vào trip \(trip.title).")
