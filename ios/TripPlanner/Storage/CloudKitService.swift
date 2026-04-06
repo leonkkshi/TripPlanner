@@ -160,7 +160,7 @@ final class CloudKitService {
 			_ = try await database.save(subscription)
 		} catch {
 			if let ckError = error as? CKError {
-				if ckError.code == .subscriptionAlreadyExists || ckError.code == .serverRejectedRequest {
+				if ckError.code == .serverRejectedRequest {
 					return
 				}
 			}
