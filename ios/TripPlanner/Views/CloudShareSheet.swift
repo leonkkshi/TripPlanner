@@ -7,7 +7,7 @@ struct CloudShareSheet: UIViewControllerRepresentable {
 	@EnvironmentObject private var tripStore: TripStore
 
 	func makeCoordinator() -> Coordinator {
-		Coordinator()
+		Coordinator(tripTitle: tripStore.trips.first(where: { $0.id == tripId })?.title)
 	}
 
 	func makeUIViewController(context: Context) -> UICloudSharingController {
@@ -28,6 +28,16 @@ struct CloudShareSheet: UIViewControllerRepresentable {
 	func updateUIViewController(_ uiViewController: UICloudSharingController, context: Context) {}
 
 	final class Coordinator: NSObject, UICloudSharingControllerDelegate {
+		private let tripTitle: String?
+
+		init(tripTitle: String?) {
+			self.tripTitle = tripTitle
+		}
+
+		func itemTitle(for csc: UICloudSharingController) -> String? {
+			tripTitle
+		}
+
 		func cloudSharingControllerDidSaveShare(_ csc: UICloudSharingController) {}
 		func cloudSharingControllerDidStopSharing(_ csc: UICloudSharingController) {}
 		func cloudSharingController(
